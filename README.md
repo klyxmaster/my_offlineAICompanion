@@ -10,6 +10,8 @@ This project is a portable, fully offline AI setup using **WinPython** and **Oll
 - **WinPython Portable** (version 3.11.9 or later)
 - **Ollama** (offline version)
 - Internet access during the initial setup (for downloading dependencies)
+- For this build, I am using A RTX 3060 gpu. It does work on a 1650 Super.
+- CHAT_MODEL = wizard-vicuna-uncensored:13b. Adjust or change to what you use.
 
 ---
 
