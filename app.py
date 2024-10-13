@@ -7,18 +7,16 @@ from fastapi.responses import PlainTextResponse, FileResponse
 from pydantic import BaseModel
 import uvicorn
 import os
-from annoy import AnnoyIndex
+import sqlite3
 import numpy as np
 from sentence_transformers import SentenceTransformer
-import tempfile
-import random
 
 # Declare constants for the model names
-CHAT_MODEL = 'wizard-vicuna-uncensored:13b'  # For generating text responses
+CHAT_MODEL = 'wizard-vicuna-uncensored:13b'
 EMBEDDING_MODEL = 'nomic-embed-text'  # For generating 384-dimensional embeddings
 PERSONALITY_FILE = "personality.txt"  # The file containing the system prompt or personality
-ANNOY_INDEX_FILE = os.path.join(tempfile.gettempdir(), "memory.ann")
-VECTOR_DIM = 384  # Annoy index dimensionality
+DB_FILE = "conversations.db"  # SQLite database file
+VECTOR_DIM = 384  # Embedding dimensionality
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -35,25 +33,74 @@ app.add_middleware(
 # Serve static files from the "static" directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Initialize Annoy index
-annoy_index = AnnoyIndex(VECTOR_DIM, 'angular')
-
-# Check if Annoy index exists and load it if present
-if os.path.exists(ANNOY_INDEX_FILE):
-    try:
-        annoy_index.load(ANNOY_INDEX_FILE)
-        print(f"Loaded Annoy index from {ANNOY_INDEX_FILE}")
-    except Exception as e:
-        print(f"Error loading Annoy index: {e}")
-else:
-    print("Annoy index file not found.")
-
 # Initialize the embedding model globally
-embedder = SentenceTransformer('all-MiniLM-L6-v2')  # You can replace this with the correct model you need
+embedder = SentenceTransformer('all-MiniLM-L6-v2')
 
-# Define the PromptModel
-class PromptModel(BaseModel):
-    prompt: str  # Ensure the prompt field is a string
+# Set up SQLite database
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    # Create a table for conversations and embeddings
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS conversations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prompt TEXT,
+            response TEXT,
+            embedding BLOB
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Store conversation in SQLite
+def store_conversation(prompt, response):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    # Generate an embedding for the conversation
+    embedding = get_embedding(prompt + response)
+    # Convert the embedding to a format that SQLite can store
+    embedding_blob = np.array(embedding).tobytes()
+    cursor.execute(
+        "INSERT INTO conversations (prompt, response, embedding) VALUES (?, ?, ?)",
+        (prompt, response, embedding_blob)
+    )
+    conn.commit()
+    conn.close()
+
+# Retrieve and compare similar conversations from SQLite
+def get_similar_conversations(prompt):
+    embedding = get_embedding(prompt)
+    
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT id, embedding FROM conversations")
+    rows = cursor.fetchall()
+
+    if not rows:
+        return []
+    
+    similarities = []
+    
+    # Compare the query embedding to all stored embeddings
+    for row in rows:
+        conv_id, stored_embedding_blob = row
+        stored_embedding = np.frombuffer(stored_embedding_blob, dtype=np.float32)
+        
+        # Calculate cosine similarity
+        similarity = np.dot(embedding, stored_embedding) / (np.linalg.norm(embedding) * np.linalg.norm(stored_embedding))
+        similarities.append((conv_id, similarity))
+    
+    # Sort by similarity and retrieve the top 5 most similar
+    similarities.sort(key=lambda x: x[1], reverse=True)
+    top_5_ids = [conv_id for conv_id, _ in similarities[:5]]
+    
+    # Fetch the corresponding conversation texts
+    cursor.execute(f"SELECT id, prompt, response FROM conversations WHERE id IN ({','.join('?' for _ in top_5_ids)})", top_5_ids)
+    similar_conversations = cursor.fetchall()
+    
+    conn.close()
+    return similar_conversations
 
 # Load the system prompt/personality from the file
 def load_personality():
@@ -67,48 +114,9 @@ def load_personality():
 def get_embedding(text):
     return embedder.encode(text)
 
-# Store conversation and update Annoy index
-def store_conversation(prompt, response):
-    global annoy_index
-
-    # Generate an embedding for the conversation
-    embedding = get_embedding(prompt + response)
-
-    # Create a temporary Annoy index to rebuild
-    temp_annoy_index = AnnoyIndex(VECTOR_DIM, 'angular')
-
-    # Copy the existing items from the loaded Annoy index to the new one
-    for i in range(annoy_index.get_n_items()):
-        vector = annoy_index.get_item_vector(i)
-        temp_annoy_index.add_item(i, vector)
-
-    # Add the new embedding to the new Annoy index
-    temp_annoy_index.add_item(temp_annoy_index.get_n_items(), embedding)
-
-    # Build the new index with 10 trees
-    temp_annoy_index.build(10)
-
-    try:
-        # Save the new index to disk
-        temp_annoy_index.save(ANNOY_INDEX_FILE)
-        print(f"Annoy index saved at {ANNOY_INDEX_FILE}")
-    except OSError as e:
-        print(f"Error saving Annoy index: {e}")
-
-    # Replace the old in-memory index with the newly built one
-    annoy_index = temp_annoy_index
-    temp_annoy_index.unload()  # Explicitly release memory
-
-# Retrieve similar conversations
-def get_similar_conversations(prompt):
-    embedding = get_embedding(prompt)
-
-    if annoy_index.get_n_items() == 0:
-        return []
-
-    # Retrieve the top 5 most similar conversations
-    similar_indices = annoy_index.get_nns_by_vector(embedding, 5, include_distances=False)
-    return similar_indices
+# Define the PromptModel
+class PromptModel(BaseModel):
+    prompt: str  # Ensure the prompt field is a string
 
 @app.post("/send_prompt/")
 def send_prompt(data: PromptModel):
@@ -125,8 +133,8 @@ def send_prompt(data: PromptModel):
 
     # Add past conversation context if available
     past_convo_context = ""
-    for i in similar_conversations:
-        past_convo = f"Past conversation {i}: [Logic to fetch conversation data]"
+    for conv_id, conv_prompt, conv_response in similar_conversations:
+        past_convo = f"Past conversation {conv_id}: {conv_prompt} -> {conv_response}"
         past_convo_context += past_convo + "\n"
 
     if past_convo_context:
@@ -150,6 +158,9 @@ def send_prompt(data: PromptModel):
 @app.get("/")
 def read_root():
     return FileResponse('/static/index.html')
+
+# Initialize the SQLite database
+init_db()
 
 # Start the FastAPI app
 if __name__ == "__main__":

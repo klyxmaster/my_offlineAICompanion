@@ -10,5 +10,12 @@ python/
 # Ignore the ollama folder, as it will be created on install
 ollama/
 
+# Ignore SQLite3 folder - suggest users get browser sql
+SQLite3/
+
+# Ignore any sqlite3 db
+*.db
+
+
 # Ignore __pycache__ folder
 __pycache__/
