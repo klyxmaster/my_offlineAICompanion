@@ -1,5 +1,8 @@
 # Virtual AI - Offline Setup Guide
 
+![Screenshot Description](assets/screenshot1.png)
+
+
 This project is a portable, fully offline AI setup using **WinPython** and **Ollama**. The guide below will walk you through the steps to get everything up and running without the need for a virtual environment.
 
 ## Prerequisites
@@ -23,7 +26,7 @@ This project is a portable, fully offline AI setup using **WinPython** and **Oll
 ## Step 2: Install Ollama (Portable Version)
 
 1. **Download Ollama**:
-   - Visit the [Ollama official site or GitHub](https://ollama.ai/) to download the offline version.
+   - Visit the [Ollama official site](https://ollama.com/) to download the offline version.
 
 2. **Extract Ollama**:
    - Extract Ollama to a directory (e.g., `E:\Ollama`).
