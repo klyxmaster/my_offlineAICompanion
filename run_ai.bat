@@ -5,11 +5,11 @@ cls
 color 7
 
 :: Set the path to WinPython and its Scripts folder
-SET "PYTHON_PATH=E:\python\python-3.11.9.amd64"
+SET "PYTHON_PATH=C:\AICompanion\python\python-3.11.9.amd64"
 SET "SCRIPTS_PATH=%PYTHON_PATH%\Scripts"
 
 :: Set the path to Ollama (adjust path based on where you installed it)
-SET "OLLAMA_PATH=E:\Ollama"
+SET "OLLAMA_PATH=C:\AICompanion\Ollama"
 
 :: Add the WinPython, Scripts, and Ollama directories to the PATH environment variable
 SET "PATH=%PYTHON_PATH%;%SCRIPTS_PATH%;%OLLAMA_PATH%;%PATH%"
