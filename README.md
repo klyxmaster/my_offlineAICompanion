@@ -68,7 +68,7 @@ This project is a portable, fully offline AI setup using **WinPython** and **Oll
 
 ## Step 4: Create and Configure the Batch File
 
-1. **Create a batch file** (`run_virtual_ai.bat`) in your project directory with the following content:
+1. **Create a batch file** (`run_ai.bat`) in your project directory with the following content:
 
     ```bat
     @echo off
