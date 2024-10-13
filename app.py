@@ -129,6 +129,9 @@ def send_prompt(data: PromptModel):
     # Load personality/system prompt from file
     system_prompt = load_personality()
 
+    # Add specific instructions to the system prompt dynamically
+    system_prompt += "\nRemember: Always address the user as 'you' and respond in the second person. Never switch roles. You are the assistant, and the user is always addressed directly."
+
     # Retrieve similar conversations (this should return IDs or indices of similar items)
     similar_conversations = get_similar_conversations(prompt)
 
@@ -149,7 +152,7 @@ def send_prompt(data: PromptModel):
         {'role': 'user', 'content': prompt}
     ]
 
-    # Get the AI response (using a proper model integration)
+    # Get the AI response using the model, passing the conversation with roles
     response = ollama.chat(CHAT_MODEL, convo)['message']['content']
 
     # Save the raw AI response to a text file
