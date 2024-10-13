@@ -1,0 +1,11 @@
+# Ignore personality.txt file
+personality.txt
+
+# Ignore memory.ann file
+memory.ann
+
+# Ignore the entire python folder
+python/
+
+# Ignore __pycache__ folder
+__pycache__/

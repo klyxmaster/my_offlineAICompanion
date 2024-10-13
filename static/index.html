@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sarah</title>
+
+    <!-- Add favicon link -->
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+</head>
+
+<body class="dark-mode">
+    <!-- Container for the left and right side -->
+    <div class="container">
+
+        <!-- Left side with AI image placeholder, name, and dummy subtitle -->
+        <div class="left-side">
+            <div class="image-placeholder">
+                <img src="/static/imgs/girl20.jpg" alt="AI Image" class="ai-image">
+            </div>
+            <h2 class="ai-name">Sarah</h2>
+            <p class="ai-subtitle">"I’m here, whenever you need me."</p>
+        </div>
+
+        <!-- Right side for the chat -->
+        <div class="right-side">
+            <div class="chat-container">
+                <!-- Single chat box for both user and AI messages -->
+                <div class="chat-box"></div>
+
+                <!-- Input field and send button -->
+                <div class="input-box">
+                    <!-- Replacing input with textarea -->
+                    <textarea id="user-input" placeholder="Type a message..."></textarea>
+                    <button id="send-button">Send</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Button to toggle between light and dark theme -->
+    <button id="theme-toggle">Toggle Light/Dark Mode</button>
+
+    <script src="/static/chat.js"></script>
+</body>
+</html>

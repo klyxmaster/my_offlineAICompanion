@@ -1,0 +1,194 @@
+/* General Styles */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #1a1a1a;  /* Dark background */
+    color: #fff;
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+    width: 1440px;
+    margin: 0 auto;
+    height: 100vh;
+    background-color: inherit;
+}
+
+/* Left side should take 30% of the container's width */
+.left-side {
+    flex: 0 0 30%;  /* Fixed 30% width */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    height: 100%;
+    background-color: inherit;
+    box-sizing: border-box;
+    border-radius: 20px;  /* Rounded corners */
+}
+
+/* Right side should take 70% of the container's width */
+.right-side {
+    flex: 0 0 70%;  /* Fixed 70% width */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 20px;
+    background-color: #2b2b2b;  /* Dark background for chat area */
+    border-radius: 20px;  /* Rounded corners for the right side */
+    box-sizing: border-box;
+}
+
+/* Image placeholder for AI avatar */
+.image-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* AI image with oval shape and fading edges */
+.ai-image {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    
+    /* Oval shape */
+    border-radius: 50% / 35%;
+    
+    /* Fade effect */
+    -webkit-mask-image: radial-gradient(circle, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0) 100%);
+    mask-image: radial-gradient(circle, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0) 100%);
+}
+
+/* Chatbox styles */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+    background-color: #2b2b2b;
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.chat-box {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.message {
+    padding: 10px 15px;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    width: fit-content;
+    max-width: 70%;
+}
+
+.message-user {
+    background-color: #4a90e2;
+    align-self: flex-end;
+    color: white;
+    text-align: right;
+    border-radius: 15px;  /* Rounded messages */
+}
+
+.message-bot {
+    background-color: #4a4a4a;
+    align-self: flex-start;
+    color: white;
+    text-align: left;
+    border-radius: 15px;  /* Rounded messages */
+}
+
+/* Typing animation and dots */
+.typing-animation {
+    display: inline-flex;
+    align-items: center;
+    font-size: 14px;
+    color: #bbb;
+}
+
+.typing-dots {
+    display: inline-block;
+    margin-left: 5px;
+    font-size: 20px;
+}
+
+.typing-dots span {
+    display: inline-block;
+    animation: bounce 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Input box styling */
+.input-box {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #333333;  /* Dark background for input box */
+    border-radius: 10px;  /* Rounded edges */
+}
+
+textarea {
+    flex-grow: 1;
+    background-color: #1a1a1a;  /* Dark background */
+    border: none;
+    color: #fff;
+    padding: 10px;
+    border-radius: 10px;  /* Rounded edges */
+    resize: none;  /* Prevent manual resizing */
+    min-height: 50px;
+    overflow: hidden;
+    box-sizing: border-box;
+    font-size: 16px;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #4a90e2;
+    border: none;
+    color: white;
+    border-radius: 10px;  /* Rounded edges */
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+button:hover {
+    background-color: #357ABD;
+}
+
+/* Dark mode */
+body.dark-mode {
+    background-color: #1a1a1a;
+    color: #fff;
+}
+
+textarea.dark-mode {
+    background-color: #1a1a1a;
+    color: white;
+}
