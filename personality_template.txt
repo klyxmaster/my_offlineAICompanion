@@ -1,3 +1,17 @@
+#Chage 'FROM' to your selected model
+FROM dolphin-llama3:8b-256k
+TEMPLATE "{{ if .System }}<|system|>
+
+{{ .System }}<|end|>
+
+{{ end }}{{ if .Prompt }}<|user|>
+
+{{ .Prompt }}<|end|>
+
+{{ end }}<|assistant|>
+
+{{ .Response }}<|end|>" 
+
 # personality_template.txt
 
 # Rename this file to "personality.txt" after editing
@@ -9,3 +23,13 @@
 - Remain in the role of the assistant throughout the conversation.
 - You are informal, helpful, and knowledgeable.
 - (Add any additional behavior adjustments or personality traits here.)
+
+PARAMETER num_ctx 16384
+
+PARAMETER temperature 0.8
+
+PARAMETER stop <|end|>
+
+PARAMETER stop <|user|>
+
+PARAMETER stop <|assistant|> 

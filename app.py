@@ -9,7 +9,6 @@ import uvicorn
 import os
 from annoy import AnnoyIndex
 import numpy as np
-import colorlog
 from sentence_transformers import SentenceTransformer
 import tempfile
 
@@ -17,13 +16,8 @@ import tempfile
 CHAT_MODEL = 'dolphin-llama3:8b-256k'  # For generating text responses
 EMBEDDING_MODEL = 'nomic-embed-text'  # For generating 384-dimensional embeddings
 PERSONALITY_FILE = "personality.txt"  # The file containing the system prompt or personality
-ANNOY_INDEX_FILE = "memory.ann"
+ANNOY_INDEX_FILE = os.path.join(tempfile.gettempdir(), "memory.ann")  # Use temp dir for index
 VECTOR_DIM = 384  # Annoy index dimensionality
-import tempfile
-
-# Use the system's temporary directory for the Annoy index file
-ANNOY_INDEX_FILE = os.path.join(tempfile.gettempdir(), "memory.ann")
-
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -75,6 +69,7 @@ def chat_with_model(system_prompt, user_prompt):
 # Ensure that the ANNOY_INDEX_FILE path is absolute and valid
 ANNOY_INDEX_FILE = os.path.join(os.getcwd(), "memory.ann")
 
+# Function to store conversations
 def store_conversation(prompt, response):
     # Generate an embedding for the prompt (or the conversation)
     embedding = get_embedding(prompt)
@@ -109,6 +104,26 @@ def store_conversation(prompt, response):
     # Explicitly release the memory for the old index
     temp_annoy_index.unload()
 
+# Function to store additional knowledge (documents, articles, etc.)
+def store_knowledge(text):
+    # Generate an embedding for the knowledge text
+    embedding = get_embedding(text)
+
+    global annoy_index
+
+    # Add the new knowledge embedding to the Annoy index
+    annoy_index.add_item(annoy_index.get_n_items(), embedding)
+
+    # Build the index with 10 trees
+    annoy_index.build(10)
+
+    try:
+        # Save the updated index
+        annoy_index.save(ANNOY_INDEX_FILE)
+        print(f"Knowledge added and Annoy index saved at {ANNOY_INDEX_FILE}")
+    except OSError as e:
+        print(f"Error saving Annoy index: {e}")
+        raise
 
 # Retrieve similar conversations
 def get_similar_conversations(prompt):
@@ -122,6 +137,22 @@ def get_similar_conversations(prompt):
     similar_indices = annoy_index.get_nns_by_vector(embedding, 5, include_distances=False)
     return similar_indices
 
+# Retrieve relevant knowledge snippets based on prompt
+def get_relevant_knowledge(prompt):
+    # Generate embedding for the input prompt
+    embedding = get_embedding(prompt)
+
+    if annoy_index.get_n_items() == 0:
+        return []
+
+    # Retrieve the top 5 most relevant knowledge items
+    relevant_indices = annoy_index.get_nns_by_vector(embedding, 5, include_distances=False)
+
+    # This is a placeholder; you would retrieve the actual knowledge content based on these indices
+    knowledge_snippets = [f"Knowledge snippet {i}" for i in relevant_indices]
+    
+    return knowledge_snippets
+
 @app.post("/send_prompt/")
 def send_prompt(data: PromptModel):
     prompt = data.prompt
@@ -132,7 +163,7 @@ def send_prompt(data: PromptModel):
     # Add specific instructions to the system prompt dynamically
     system_prompt += "\nRemember: Always address the user as 'you' and respond in the second person. Never switch roles. You are the assistant, and the user is always addressed directly."
 
-    # Retrieve similar conversations (this should return IDs or indices of similar items)
+    # Retrieve similar conversations
     similar_conversations = get_similar_conversations(prompt)
 
     # Fetch the actual conversation data for the similar conversations (assuming conversation_data is stored somewhere)
@@ -145,6 +176,13 @@ def send_prompt(data: PromptModel):
     # Include the past conversation context in the system prompt or as part of the user prompt
     if past_convo_context:
         system_prompt += f"\nHere are some past relevant conversations:\n{past_convo_context}"
+
+    # Retrieve relevant knowledge snippets (expanding knowledge base)
+    knowledge_snippets = get_relevant_knowledge(prompt)
+
+    # Inject relevant knowledge into the system prompt
+    if knowledge_snippets:
+        system_prompt += "\nRemember: Always address the user as 'you' and respond in the second person. Never switch roles. You are the assistant, and the user is always addressed directly."
 
     # Prepare the conversation with the system prompt and the user's input
     convo = [
@@ -164,11 +202,12 @@ def send_prompt(data: PromptModel):
 
     return PlainTextResponse(response)
 
-
 # Serve the index.html file at the root URL
 @app.get("/")
 def read_root():
-    return FileResponse('/static/index.html')
+    # Use os.path to get the absolute path to the static directory
+    index_file = os.path.join(os.getcwd(), "static", "index.html")
+    return FileResponse(index_file)
 
 # Start the FastAPI app
 if __name__ == "__main__":
