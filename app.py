@@ -122,11 +122,9 @@ class PromptModel(BaseModel):
 def send_prompt(data: PromptModel):
     prompt = data.prompt
 
-    # Load personality/system prompt from file
-    system_prompt = load_personality()
+    # Load personality/system prompt from file and add the required instructions
+    system_prompt = load_personality() + "\n\nAlways respond directly to the user using 'you.' Do not refer to the user indirectly (e.g., 'he,' 'she'). Keep your responses concise and use second-person pronouns consistently."
 
-    # Add specific instructions to the system prompt dynamically
-    system_prompt += "\nAlways address the user directly and respond in the second person."
 
     # Retrieve similar conversations
     similar_conversations = get_similar_conversations(prompt)
@@ -134,13 +132,14 @@ def send_prompt(data: PromptModel):
     # Add past conversation context if available
     past_convo_context = ""
     for conv_id, conv_prompt, conv_response in similar_conversations:
-        past_convo = f"Past conversation {conv_id}: {conv_prompt} -> {conv_response}"
+        #past_convo = f"Past conversation {conv_id}: {conv_prompt} -> {conv_response}"
+        past_convo = "{conv_prompt} -> {conv_response}"
         past_convo_context += past_convo + "\n"
 
     if past_convo_context:
         system_prompt += f"\nHere are some past relevant conversations:\n{past_convo_context}"
 
-    # Prepare the conversation
+    # Prepare the conversation (single system prompt)
     convo = [
         {'role': 'system', 'content': system_prompt},
         {'role': 'user', 'content': prompt}
@@ -153,6 +152,7 @@ def send_prompt(data: PromptModel):
     store_conversation(prompt, response)
 
     return PlainTextResponse(response)
+
 
 # Serve the index.html file at the root URL
 @app.get("/")
